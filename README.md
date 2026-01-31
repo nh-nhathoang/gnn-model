@@ -47,7 +47,7 @@ Minor numerical differences compared to the thesis may occur due to random initi
 This repository is intended for **academic and educational use**.
 
 ## Reference 
-
+```
 @article{chung2024prediction,
 title={Prediction of effective elastic moduli of rocks using Graph Neural Networks},
 author={Chung, Jaehong and Ahmad, Rasool and Sun, WaiChing and Cai, Wei and Mukerji, Tapan},
@@ -57,3 +57,4 @@ pages={116780},
 year={2024},
 publisher={Elsevier}
 }
+```
