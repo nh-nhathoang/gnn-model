@@ -4,25 +4,29 @@ This repository predicts the elastic modulus of planar lattice structures using 
 
 ## Repository Structure
 
-```
-├── saved_model/
-│   └── epoch_200.pt          # Trained model checkpoint 
+
+```text
+├── final_model_local.py          # Main local Python script for training and evaluation
+├── gin_model.ipynb               # GIN notebook experiment
+├── gin_model_6_features.ipynb    # GIN experiment with additional node features
+├── saved_model/                  # Saved model checkpoints and generated figures
 ├── utils/
-│   ├── GNN_architecture.py   # GIN and Graph Transformer model definitions
-│   ├── GNN_data.py           # Data loading and graph construction utilities
-│   ├── train_model.py        # Training loop
-│   ├── evaluate_model.py     # Evaluation 
-│   └── __pycache__/
-├── GIN.ipynb                 # GIN experiments and analysis
-├── final-gnn-transformer-model.ipynb  # Final Transformer-based GNN model
-├── README.md
-└── .gitignore
+│   ├── architecture.py           # GIN and Graph Transformer model definitions
+│   ├── data_processing.py        # Graph utilities, normalization, dataset split, duplicate checking
+│   ├── train_model.py            # Training loop
+│   └── evaluate_model.py         # Evaluation and prediction-vs-ground-truth visualization
+├── Hexagonal/                    # Dataset folder, not included in repository
+├── Kagome/                       # Dataset folder, not included in repository
+├── Demi-A/                       # Dataset folder, not included in repository
+├── Demi-B/                       # Dataset folder, not included in repository
+├── Demi-C/                       # Dataset folder, not included in repository
+└── README.md
 ```
 
 ## Models
 
 * **GIN (Graph Isomorphism Network)** with 3 convolution layers and global pooling
-* **Graph Transformer** using 4 multi-head attention
+* **Graph Transformer** using 4 attention heads
 
 Each node is represented by two features (x, y) coordinates. Graph connectivity encodes struts. The model predicts a single scalar output (elastic modulus).
 
@@ -30,7 +34,7 @@ Each node is represented by two features (x, y) coordinates. Graph connectivity 
 
 * Data is generated from finite element (FE) simulations of planar lattice structures
 * Each simulation corresponds to one `.inp` file and one elastic modulus E value
-* The dataset itself is not included in this repository
+* The dataset is not included in this repository
 
 ## Reproducibility
 
@@ -38,9 +42,59 @@ The repository provides:
 
 * Complete model architectures
 * Training and evaluation pipelines
-* Example notebooks reproducing the thesis methodology
 
-Minor numerical differences compared to the thesis may occur due to random initialization or refactoring. 
+## Installation
+
+Create or activate a Python environment, then install the required packages:
+
+```bash
+pip3 install torch torch-geometric numpy matplotlib scikit-learn networkx
+```
+
+On macOS, use `python3` and `pip3` instead of `python` and `pip` if needed.
+
+## Running the Code Locally
+
+From the repository root, run:
+
+```bash
+python3 final_model_local.py
+```
+
+The default settings are:
+
+- model: Graph Transformer
+- batch size: 32
+- epochs: 200
+- learning rate: 0.001
+- train/test/validation split: 80% / 10% / 10%
+
+You can also change settings from the command line:
+
+```bash
+python3 final_model_local.py --model gin --batch_num 64 --epoch_num 100
+```
+
+If the dataset is stored in different folder, pass the path using:
+
+```bash
+python3 final_model_local.py --data_dir /path/to/dataset
+```
+
+The script automatically checks the available device:
+
+1. Apple GPU through MPS,
+2. CUDA GPU,
+3. CPU.
+
+## Outputs
+
+Generated files are saved in `saved_model/`, including:
+
+- trained model checkpoint, for example `epoch_200.pt`
+- dataset distribution figure
+- training loss figure
+- prediction-vs-ground-truth evaluation plots
 
 ## License
 
