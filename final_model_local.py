@@ -13,8 +13,8 @@ from torch.nn import Linear
 from torch_geometric.data import Data
 from torch_geometric.nn import TransformerConv, global_mean_pool
 
-from utils.GNN_data import *
-from utils.GNN_architecture import GIN
+from utils.data_processing import *
+from utils.architecture import GIN
 from utils.train_model import train_model
 from utils.evaluate_model import *
 
@@ -234,6 +234,8 @@ def main():
     os.makedirs(args.save_model_dir, exist_ok=True)
 
     dataset = load_dataset(args.data_dir, folder_list)
+
+    duplicates = check_duplicate_graphs(dataset)
 
     batch_size = args.batch_num
     epoch_num = args.epoch_num
