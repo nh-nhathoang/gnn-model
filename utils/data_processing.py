@@ -4,7 +4,7 @@ from torch.utils.data import Dataset, random_split
 from itertools import permutations
 import networkx as nx
 from torch_geometric.data import Data
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 import numpy as np
 
     
@@ -39,8 +39,9 @@ def make_undirected(data):
     missing_edges = [(b, a) for a, b in edge_set if (b, a) not in edge_set]
 
     # Convert lists of missing edges to tensor format and add them to the original edge_index
-    missing_edges_tensor = torch.tensor(missing_edges, dtype=torch.long).t()
-    data.edge_index = torch.cat([edge_index, missing_edges_tensor], dim=1)
+    if len(missing_edges) > 0:
+        missing_edges_tensor = torch.tensor(missing_edges, dtype=torch.long).t()
+        data.edge_index = torch.cat([edge_index, missing_edges_tensor], dim=1)
     
     return data
 
@@ -88,9 +89,12 @@ def normalize_planar_info(data_list):
     for data in data_list:
         num_features = data.x.shape[1]
         for i in range(0, num_features):
+
+            min_val = torch.min(data.x[:, i]).item()
             max_val = torch.max(data.x[:, i]).item()
-            if max_val != 0:
-                data.x[:, i] /= max_val
+            
+            if max_val - min_val != 0:
+                data.x[:, i] = (data.x[:, i] - min_val) / (max_val - min_val)
 
     return data_list
 

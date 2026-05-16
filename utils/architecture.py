@@ -40,9 +40,9 @@ class GIN(torch.nn.Module):
         
         # Classifier
         h = self.relu(self.lin1(h))
-        h = F.dropout(h, p=0.5, training=self.training)
+        #h = F.dropout(h, p=0.0, training=self.training)
         h = self.relu(self.lin2(h))
-        h = F.dropout(h, p=0.5, training=self.training)
+        #h = F.dropout(h, p=0.0, training=self.training)
         h = self.lin4(h)
         
         return h.squeeze()
@@ -74,9 +74,9 @@ class Transformer(torch.nn.Module):
         h = torch.cat((h1, h2, h3), dim=1)
 
         h = self.relu(self.lin1(h))
-        h = F.dropout(h, p=0.5, training=self.training)
+        #h = F.dropout(h, p=0.0, training=self.training)
         h = self.relu(self.lin2(h))
-        h = F.dropout(h, p=0.5, training=self.training)
+        #h = F.dropout(h, p=0.0, training=self.training)
         h = self.lin3(h)
 
         return h.squeeze()

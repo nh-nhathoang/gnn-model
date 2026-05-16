@@ -22,9 +22,8 @@ def visualize_performance(true_E, pred_E, R2, cover_interval, overlap, save_dir)
 
     plt.tight_layout()
     
-
-def evaluate_model(model, loader, device, cover_interval, overlap, save_dir):
-    # Evaluate the model on the test set
+# Evaluate model performance on the training, validation, and test sets
+def evaluate_model(model, loader, device, cover_interval, overlap, save_dir, split_name = "test"):
     model.eval()
 
     E_pred_whole = []
@@ -43,8 +42,10 @@ def evaluate_model(model, loader, device, cover_interval, overlap, save_dir):
 
     R2 = r2_score(E_whole, E_pred_whole)
 
-    print(f'Test R2 for E: {R2}')
+    print(f'{split_name.capitalize()} R2 for E: {R2}')
 
     # Return values if needed later
     visualize_performance(E_whole, E_pred_whole, R2, cover_interval, overlap, save_dir)
+    plt.savefig(f"{save_dir}/{split_name}_prediction_vs_ground_truth.png")
+    plt.close()
     return R2

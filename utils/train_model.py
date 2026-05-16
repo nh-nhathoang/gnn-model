@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from sklearn.metrics import r2_score
+import copy
 
 def train_model(model, train_loader, test_loader, criterion, optimizer, scheduler, device='cuda', num_epochs=1):
     model.to(device)
@@ -13,8 +14,8 @@ def train_model(model, train_loader, test_loader, criterion, optimizer, schedule
     best_state_dict = None
     best_loss = float('inf')
     
-    model.train()
     for epoch in range(num_epochs):
+        model.train()
         train_loss = 0
         total_graphs = 0
         pred_whole = []
@@ -79,7 +80,7 @@ def train_model(model, train_loader, test_loader, criterion, optimizer, schedule
         
         if test_loss < best_loss:
             best_loss = test_loss
-            best_state_dict = model.state_dict()            
+            best_state_dict = copy.deepcopy(model.state_dict())
         print(f'Epoch [{epoch+1}], LR [{current_lr}], Loss[Train: {epoch_loss:.3f}, Test: {test_loss:.3f}], R2[Train: {R2_train:.3f}, Test: {R2_test:.3f}]')
     
     print(f'Final Test Loss: {test_losses[-1]:.4f}')

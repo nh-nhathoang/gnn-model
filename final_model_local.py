@@ -14,7 +14,7 @@ from torch_geometric.data import Data
 from torch_geometric.nn import TransformerConv, global_mean_pool
 
 from utils.data_processing import *
-from utils.architecture import GIN
+from utils.architecture import GIN, Transformer
 from utils.train_model import train_model
 from utils.evaluate_model import *
 
@@ -123,38 +123,6 @@ def load_dataset(data_dir, folder_list):
     return dataset
 
 
-class Transformer(torch.nn.Module):
-    def __init__(self, dim_h, node_feature, heads=4):
-        super().__init__()
-        self.conv1 = TransformerConv(node_feature, dim_h, heads=heads)
-        self.conv2 = TransformerConv(dim_h * heads, dim_h, heads=heads)
-        self.conv3 = TransformerConv(dim_h * heads, dim_h, heads=heads)
-
-        self.lin1 = Linear(dim_h * heads * 3, dim_h * 2)
-        self.lin2 = Linear(dim_h * 2, dim_h * 2)
-        self.lin3 = Linear(dim_h * 2, 1)
-        self.relu = nn.ReLU()
-
-    def forward(self, x, edge_index, batch):
-        h1 = self.relu(self.conv1(x, edge_index))
-        h2 = self.relu(self.conv2(h1, edge_index))
-        h3 = self.relu(self.conv3(h2, edge_index))
-
-        h1 = global_mean_pool(h1, batch)
-        h2 = global_mean_pool(h2, batch)
-        h3 = global_mean_pool(h3, batch)
-
-        h = torch.cat((h1, h2, h3), dim=1)
-
-        h = self.relu(self.lin1(h))
-        h = F.dropout(h, p=0.5, training=self.training)
-        h = self.relu(self.lin2(h))
-        h = F.dropout(h, p=0.5, training=self.training)
-        h = self.lin3(h)
-
-        return h.squeeze()
-
-
 def plot_dataset(dataset, output_dir):
     E_vals = [data.E for data in dataset]
 
@@ -176,16 +144,7 @@ def plot_dataset(dataset, output_dir):
         x = range(start, end)
         y = E_vals[start:end]
 
-        plt.plot(
-            x,
-            y,
-            linestyle="none",
-            marker=markers[i],
-            color=colors[i],
-            markersize=3,
-            label=labels[i],
-            alpha=0.4,
-        )
+        plt.plot( x, y, linestyle="none", marker=markers[i], color=colors[i], markersize=3, label=labels[i], alpha=0.4)
 
     plt.ylabel(r"Elastic Modulus $E$ (GPa)")
     plt.xlabel("Samples")
@@ -235,7 +194,7 @@ def main():
 
     dataset = load_dataset(args.data_dir, folder_list)
 
-    duplicates = check_duplicate_graphs(dataset)
+    check_duplicate_graphs(dataset)
 
     batch_size = args.batch_num
     epoch_num = args.epoch_num
@@ -266,9 +225,7 @@ def main():
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-4)
     criterion = nn.MSELoss()
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="min", patience=5, factor=0.5, min_lr=1e-5
-    )
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau( optimizer, mode="min", patience=5, factor=0.5, min_lr=1e-5)
 
     if torch.backends.mps.is_available():
         device = torch.device("mps")
@@ -289,14 +246,8 @@ def main():
     print("Number of parameters:", num_params)
 
     train_losses, test_losses, R2_trainings, R2_tests, best_state_dict = train_model(
-        model,
-        train_loader,
-        test_loader,
-        criterion,
-        optimizer,
-        scheduler,
-        device=device,
-        num_epochs=epoch_num,
+        model, train_loader, test_loader, criterion, 
+        optimizer, scheduler, device=device, num_epochs=epoch_num,
     )
 
     plot_losses(train_losses, test_losses, epoch_num, args.save_model_dir)
@@ -305,14 +256,11 @@ def main():
     torch.save(best_state_dict, best_model_path)
     print(f"Saved best model to: {best_model_path}")
 
-    print("Training data:")
-    evaluate_model(model, train_loader, device, args.cover_interval, overlap, args.save_model_dir)
+    model.load_state_dict(best_state_dict)
 
-    print("Validation data:")
-    evaluate_model(model, test_loader, device, args.cover_interval, overlap, args.save_model_dir)
-
-    print("Testing data:")
-    evaluate_model(model, valid_loader, device, args.cover_interval, overlap, args.save_model_dir)
+    evaluate_model(model, train_loader, device, args.cover_interval, overlap, args.save_model_dir, split_name="train")
+    evaluate_model(model, test_loader, device, args.cover_interval, overlap, args.save_model_dir, split_name="validation")
+    evaluate_model(model, valid_loader, device, args.cover_interval, overlap, args.save_model_dir, split_name="test")
 
 
 if __name__ == "__main__":
